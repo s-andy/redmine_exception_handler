@@ -1,7 +1,9 @@
 ---
 language: ruby
 sudo: false
-cache: bundler
+cache:
+  directories:
+  - workspace/redmine/vendor/bundle
 timeouts:
   bundle: 600
 rvm:
