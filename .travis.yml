@@ -1,5 +1,7 @@
 ---
 language: ruby
+sudo: false
+cache: bundler
 timeouts:
   bundle: 600
 rvm:
