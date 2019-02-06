@@ -1,44 +1,31 @@
----
-language: ruby
-sudo: false
-cache:
-  directories:
-  - workspace/redmine/vendor/bundle
-timeouts:
-  bundle: 600
-rvm:
- - 1.9.3
- - 2.0.0
- - 2.2.0
-env:
-  global:
-   - REDMINE_DIR=./workspace/redmine
-   - PLUGIN_NAME=redmine_exception_handler
-  matrix:
-   - REDMINE=3.0-stable
-   - REDMINE=v3.8.0
-   - REDMINE=master
+dist: xenial
+
+services:
+  - mysql
+
 matrix:
-  exclude:
-   - rvm: 2.0.0
-     env: REDMINE=v3.8.0
-     gemfile: workspace/redmine/Gemfile
-   - rvm: 2.2.0
-     env: REDMINE=v3.8.0
-     gemfile: workspace/redmine/Gemfile
-  allow_failures:
-   - env: REDMINE=v3.8.0
-gemfile: workspace/redmine/Gemfile
+  include:
+    - name: "Redmine 3.4"
+      env:
+        - REDMINE_VERSION=3.4-stable
+      install:
+        - gem install bundler -v "1.17.3"
+        - bundle _1.17.3_ install
+        - bin/rake db:create
+        - bin/rake generate_secret_token
+        - bin/rake db:migrate
+        - bin/rake redmine:plugins:migrate
+      script:
+        - RAILS_ENV=test bin/rake redmine:plugins:test:integration
+
 before_install:
- - ./script/ci.sh clone_redmine --target $REDMINE_DIR
- - cp ./config/database.yml.travis $REDMINE_DIR/config/database.yml
- - ./script/ci.sh install_plugin_gemfile
-install: ./script/ci.sh bundle_install
-before_script:
- - mysql -e 'CREATE DATABASE redmine CHARACTER SET utf8;'
- - ./script/ci.sh prepare_redmine
- - ./script/ci.sh prepare_plugin
- - 'phantomjs --webdriver 4444 2>&- 1>&- &'
-script:
- - ./script/ci.sh run_tests
- - ./script/ci.sh test_uninstall
+  - cd ..
+  - git clone
+      --depth 1
+      --branch ${REDMINE_VERSION}
+      https://github.com/redmine/redmine.git
+  - cd redmine/plugins
+  - ln -s ../../redmine_exception_handler ./
+  - cd ../
+  - cp config/database.yml{.example,}
+  - unset BUNDLE_GEMFILE
